@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/>
+<link as="style" href="https://fonts.googleapis.com/css2?display=swap&amp;family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;family=Noto+Sans:wght@400;500;700;900" onload="this.rel='stylesheet'" rel="stylesheet"/>
+<title>PetPal - Your Pet's Best Friend</title>
+<link href="data:image/x-icon;base64," rel="icon" type="image/x-icon"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style type="text/tailwindcss">
+        :root {
+            --primary-color: #47eb99;
+            --background-color: #f9f9f9;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --accent-color: #e6f7ee;
+            --header-background: #ffffff;
+            --footer-background: #f0f0f0;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', 'Noto Sans', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            padding-top: 80px;
+        }
+        .product_card {
+            @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-lg transition-all duration-300 ease-in-out flex flex-col;
+        }
+        .product_image_container {
+            @apply relative w-full h-48;
+        }
+        .product_image {
+            @apply w-full h-full object-cover rounded-t-lg;
+        }
+        .product_pet_indicator {
+            @apply absolute top-2 right-2 bg-white bg-opacity-80 backdrop-blur-sm rounded-full px-2 py-1 text-xs font-semibold text-[var(--text-primary)] flex items-center gap-1;
+        }
+        .product_title {
+            @apply text-lg font-semibold mt-4 text-[var(--text-primary)];
+        }
+        .product_description {
+            @apply text-sm text-[var(--text-secondary)] mt-1 h-10;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .button_primary {
+            @apply w-full flex items-center justify-center gap-2 bg-transparent border-2 border-[var(--primary-color)] text-[var(--primary-color)] rounded-md px-4 py-2 mt-4 hover:bg-[var(--primary-color)] hover:text-white transition-colors duration-300 font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-color)];
+        }
+        .shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+        .loading-card .shimmer-bg {
+            @apply shimmer;
+        }
+        .loading-card .shimmer-text {
+            @apply shimmer rounded;
+            background-color: #e0e0e0;
+        }
+        .filter-chip {
+            @apply cursor-pointer inline-block bg-gray-100 text-[var(--text-secondary)] rounded-full px-4 py-2 text-sm font-medium hover:bg-gray-200 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[var(--primary-color)];
+        }
+        .filter-chip-active {
+            @apply bg-[var(--primary-color)] text-white hover:bg-[var(--primary-color)];
+        }
+        .category-card {
+            @apply flex flex-col items-center justify-center p-4 rounded-lg bg-white border border-gray-200 shadow-sm hover:shadow-lg hover:border-[var(--primary-color)] transition-all duration-300 ease-in-out cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-color)];
+        }
+        .category-card-active {
+            @apply border-[var(--primary-color)] ring-2 ring-[var(--primary-color)];
+        }
+        #toast-success {
+            opacity: 0;
+            transform: translateY(2rem);
+            transition: all 0.5s ease-in-out;
+        }
+        #toast-success.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="bg-[var(--background-color)]" x-data="{ isMenuOpen: false }">
+<div class="relative flex size-full min-h-screen flex-col group/design-root overflow-x-hidden">
+<div class="layout-container flex h-full grow flex-col">
+<header class="fixed top-0 left-0 right-0 z-20 bg-[var(--header-background)] shadow-md">
+<div class="container mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4">
+<div class="flex items-center gap-4">
+<div class="text-[var(--primary-color)] h-10 w-10">
+<svg aria-label="PetPal Logo" fill="currentColor" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M36.7273 44C33.9891 44 31.6043 39.8386 30.3636 33.69C29.123 39.8386 26.7382 44 24 44C21.2618 44 18.877 39.8386 17.6364 33.69C16.3957 39.8386 14.0109 44 11.2727 44C7.25611 44 4 35.0457 4 24C4 12.9543 7.25611 4 11.2727 4C14.0109 4 16.3957 8.16144 17.6364 14.31C18.877 8.16144 21.2618 4 24 4C26.7382 4 29.123 8.16144 30.3636 14.31C31.6043 8.16144 33.9891 4 36.7273 4C40.7439 4 44 12.9543 44 24C44 35.0457 40.7439 44 36.7273 44Z"></path>
+</svg>
+</div>
+<h1 class="text-[var(--text-primary)] text-2xl lg:text-3xl font-bold tracking-tight">PetPal</h1>
+</div>
+<div class="flex-1 hidden md:flex justify-center px-8">
+<div class="w-full max-w-lg">
+<label class="relative text-[var(--text-secondary)]" for="search-desktop">
+<div aria-hidden="true" class="absolute left-4 top-1/2 -translate-y-1/2" data-icon="MagnifyingGlass" data-size="24px" data-weight="regular">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+</svg>
+</div>
+<input class="form-input w-full rounded-full border-gray-300 bg-gray-100 py-3 pl-12 pr-4 text-[var(--text-primary)] focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)]" id="search-desktop" placeholder="Search products..." type="search"/>
+</label>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button aria-label="Open shopping cart" class="peer relative rounded-full text-gray-600 hover:text-[var(--primary-color)] transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-color)]">
+<svg fill="currentColor" height="32" viewBox="0 0 256 256" width="32" xmlns="http://www.w3.org/2000/svg">
+<path d="M222.14,58.87A8,8,0,0,0,216,56H54.68L49.79,29.14A16,16,0,0,0,34.05,16H16a8,8,0,0,0,0,16h18L59.56,172.29a24,24,0,0,0,5.33,11.27,28,28,0,1,0,44.4,8.44h45.42A27.75,27.75,0,0,0,152,204a28,28,0,1,0,28-28H83.17a8,8,0,0,1-7.87-6.57L72.13,152h116a24,24,0,0,0,23.61-19.71l12.16-66.86A8,8,0,0,0,222.14,58.87ZM96,204a12,12,0,1,1-12-12A12,12,0,0,1,96,204Zm96,0a12,12,0,1,1-12-12A12,12,0,0,1,192,204Zm4-74.57A8,8,0,0,1,188.1,136H69.22L57.59,72H206.41Z"></path>
+</svg>
+<span aria-live="polite" class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">3</span>
+</button>
+<button :aria-expanded="isMenuOpen.toString()" @click="isMenuOpen = !isMenuOpen" aria-controls="mobile-menu" class="md:hidden text-gray-600 hover:text-[var(--primary-color)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--primary-color)]">
+<span class="sr-only">Open main menu</span>
+<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+<div :class="{'block': isMenuOpen, 'hidden': !isMenuOpen}" class="md:hidden absolute top-full left-0 w-full bg-white shadow-md p-4" id="mobile-menu">
+<label class="relative text-[var(--text-secondary)] mb-4 block" for="search-mobile">
+<div aria-hidden="true" class="absolute left-4 top-1/2 -translate-y-1/2" data-icon="MagnifyingGlass" data-size="24px" data-weight="regular">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg">
+<path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path>
+</svg>
+</div>
+<input class="form-input w-full rounded-full border-gray-300 bg-gray-100 py-3 pl-12 pr-4 text-[var(--text-primary)] focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)]" id="search-mobile" placeholder="Search products..." type="search"/>
+</label>
+</div>
+</div>
+</header>
+<div class="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="flex flex-col lg:flex-row gap-8">
+<main class="w-full">
+<div class="mb-8">
+<h2 class="text-2xl font-bold text-[var(--text-primary)] mb-4 text-center">Shop by Pet</h2>
+<div aria-labelledby="pet-filter-label" class="grid grid-cols-2 sm:grid-cols-4 gap-6" role="radiogroup">
+<div aria-checked="true" class="category-card category-card-active" role="radio" tabindex="0">
+<img alt="A cute illustrated dog, representing the dog category." class="h-16 w-16 sm:h-20 sm:w-20 mb-3" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBozfxiORgQJKEUm6SzFN2hLjR3yetZtp8wyQm2Ozaf0TKkQyQWzPO93Gm0gKFG7WLi4FnXVegoZNBgq7dzk6OmzPcPMxHn6GAm3IJb9TqyelX4KnYxMxgnE9ZMHgHhjtOVYAPWMz41JnwabvdjBEeCsOru0_PA275udZt41O-0m7ZlxHcoUkr00ijyc6EB4aZrVJRNhu26LjHfU4Cq3ywxb6VyXnEdORbR7gybB1q0CdDxZwRxOOM3fgtTNTF4WJTFtoNlH3J8iV8"/>
+<span class="text-lg font-semibold text-[var(--text-primary)]">Dog</span>
+</div>
+<div aria-checked="false" class="category-card" role="radio" tabindex="-1">
+<img alt="A playful illustrated cat, representing the cat category." class="h-16 w-16 sm:h-20 sm:w-20 mb-3" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmfyBUOH5C60vU5Js4a4W4EejbMO1u8UK7D_DdzJNyslQ3tq8EM63sc936OPXdZFC5o8eMXkHwHw3tq47JNfhNUrvgrMmTpuhr0BgtoF7mnXmIVMCXUfEV_omyMaTQ3zurETzoB2vlk_VbqIyYxjJhcDU5Wfbas6M0K0y9WdskqYJtn3IRnQE-ZJJlapSW2OTWxUwL9zHY12RG_yniLQ-0BhXvGtVxP1VwGTZtzyxXYXyN3hnwbcLgE6mtnJjVqBYy6EMUQ98ocEde"/>
+<span class="text-lg font-semibold text-[var(--text-primary)]">Cat</span>
+</div>
+<div aria-checked="false" class="category-card" role="radio" tabindex="-1">
+<img alt="A 3D transparent image of a bird, representing the bird category." class="h-16 w-16 sm:h-20 sm:w-20 mb-3" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCq1qJ_1vN-f5kX2J5x9_9yB1z9y9_9zB3z_0x_8yB5z-5x-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_e.g.s_9y9_9zB3z_0x_8yB5z-5x-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_8yC5z-5y-5_e.g.s"/>
+<span class="text-lg font-semibold text-[var(--text-primary)]">Birds</span>
+</div>
+<div aria-checked="false" class="category-card" role="radio" tabindex="-1">
+<img alt="A group of various illustrated pets including a hamster and a bird, representing other pets." class="h-16 w-16 sm:h-20 sm:w-20 mb-3" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEWRz4qUWnULQae6rRdc2pLKiQJNmipm-uTvpFCDzRIvOdCikIxP1UupA_JWuMGIs1kRtf4XAHqPaHI9JhOoO0VS5NJ9nTVRHbCO47vnrTY4N6D7vRikhIbY0F8X90uipF8uLA7rmUyJCn82Q-ocjR8yTWzMvPI7FXim_UdGicfFjm18JLB3Vh2sxJF_HUR25oh1Al0crv_--5Jsxy1X3pWbA2KBaIT2azBFnPQYLpO1MqtQGvz3KEx8oPueYp330EMa0ih3hXcAeG"/>
+<span class="text-lg font-semibold text-[var(--text-primary)]">Other Pets</span>
+</div>
+</div>
+</div>
+<h2 class="text-3xl font-bold text-[var(--text-primary)] mb-6 text-center">Our Pet Care Products</h2>
+<div aria-label="Product Categories" class="mb-8 flex justify-center gap-2 flex-wrap" role="tablist">
+<button aria-selected="true" class="filter-chip filter-chip-active" role="tab">All Products</button>
+<button aria-selected="false" class="filter-chip" role="tab" tabindex="-1">Toys</button>
+<button aria-selected="false" class="filter-chip" role="tab" tabindex="-1">Food &amp; Treats</button>
+<button aria-selected="false" class="filter-chip" role="tab" tabindex="-1">Accessories</button>
+<button aria-selected="false" class="filter-chip" role="tab" tabindex="-1">Grooming</button>
+<button aria-selected="false" class="filter-chip" role="tab" tabindex="-1">Health</button>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+<div class="product_card">
+<div class="product_image_container">
+<img alt="A comfortable and plush cat bed in a neutral color." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbJnQN-p0xUvTTjNqF5iywyoj9jbsuJYgwr9AfowZHShTPMMz_RMNe7Ow281x59xdZbCo44UoQCt6VpyRtrWD6773srpre9kUfGPesTSqvKmv4UNmOQWOYewOEF78WxnLuwPL6c7uaXdRM0dXD_y5G1NeN3MkbRDr3A4mwvTFqNdSQYICu67P-eg1H_nDpNMokYMn1Idu_G4ZR1xzH74jKmCeMEMPTYqEGDI-IYiDl7fG9HDH-HSZvDyWCugmp1nzVDGUVZ_2g577Y"/>
+<div class="product_pet_indicator">
+<span>Cat</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">CozyCat Bed</h3>
+<p class="product_description">A super soft and snuggly bed that provides ultimate comfort for your feline friend.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+<div class="product_card">
+<div class="product_image_container">
+<img alt="A bag of delicious, bone-shaped dog treats." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5MpnUJMpBVuBGRMTIS2bLQyWO3srxJ4nZMT4ccDuYLpAVQbfx7aoXY2poCOUlxoctmfKd-FEOyICa7TgEAThMtnQKWUKW818y0VHUqU4eb6zF4Fb_ITSR9WEAVa0exnQsTLiJjeNDpMG7XEjWtuzFWuw3MiCz1EYtwQfH1e_xwxxoZyaa3cha4hE2okeHSFRUt_FVMjR2pPTfK8TSR_14Y6IXnmZJg952BboIVys3--8eluEVQTlM4T6ik5294umI3FKPFPsSBYcZ"/>
+<div class="product_pet_indicator">
+<span>Dog</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">Doggy Delight Treats</h3>
+<p class="product_description">Delicious and healthy treats made with all-natural ingredients that your dog will love.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+<div class="product_card">
+<div class="product_image_container">
+<img alt="A colorful feather wand toy for cats." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCJAC6c_xi3u6hkaCv6FBI7ciUTkM8e8NGsnYYrKrDjxI6_bwYwvMIeRuCx-hTo1YSPaC_tyaPHU91U23hLwHDXrqfywhYmwxK_jldDzN-AezJAHFEcDq6elkD373GwmdJjByTw-zE02w6hEYPMnimsO_BhG2NrCgrdC-vsgUFn928edNS0DdUOj2eyJ8knR14IV8VAEtDs4uD1biTK5cyF3iDunYewNMho1cqmpazpqqf2drF7XC1HE57EIANiWosTflKhaIoPwCq"/>
+<div class="product_pet_indicator">
+<span>Cat</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">Feather Frenzy Toy</h3>
+<p class="product_description">An interactive feather toy that will keep your cat entertained for hours.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+<div class="product_card">
+<div class="product_image_container">
+<img alt="A blue, spill-proof water bowl for dogs." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwBy2-hMqr0vR889WtSzEMEONB-Jbvz-Ue38EYZVVAjK0r3cE6qDjkgWQVP19aUv7eaY77SQ8DwPu6b7nKOQp-s9BCbqA7jcEyBFDJYmvTPuhjFQqQaWnXfiwQt9o5R9bwFlHEHAmkYSU32LIElfjfqPmDmW7HeligSu5XVB6uz1cKyd8ottBVJqEsR0DnOFohEf7eSOpbwNcurJSuGTFc4olGRL6KtXW4PwW1mjKLSPMIU94CQOzHU_UGTrWD778rS2rDuT0C3dNE"/>
+<div class="product_pet_indicator">
+<span>Dog</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">AquaPup Water Bowl</h3>
+<p class="product_description">A spill-proof and stylish water bowl that ensures your pup stays hydrated.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+<div class="product_card">
+<div class="product_image_container">
+<img alt="A durable, red rubber chew toy for dogs." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPmWFCzANGzFwkIkvxEuZ4ktST0HK0kLptmxSeW2_UzSQZuuBNQEHYIlD9G-D7QT38ljlMz80nPQTamVpWjI4akzgU0-kqJ_jBwNTzTDzpPxLpMYL0eVUxX5OVrpLqwecsgRZO1AdOSEcMhD68mRSO2zuXvlCBcdMVDTCmMp5gsuvD6a-7a0vwUYg_95HSJ8rr-xFCOS1n9CnzVwzL9UgwrsP8z46SKhu-C8YNaTaBTZ2FLCf6iN6LVpDsGgTmY5NSji9pnk8cMBVa"/>
+<div class="product_pet_indicator">
+<span>Dog</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">ToughChew Toy</h3>
+<p class="product_description">A virtually indestructible chew toy designed for the most powerful chewers.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+<div class="product_card">
+<div class="product_image_container">
+<img alt="A bottle of organic pet shampoo." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWkJiClhonmift_zgZwbykgd_WaGnBj54gCeh0fzjIk71p6MoSapR070gWIQX0RBCIKQhHVNlfeFI5yO6ZaANMCBLQTg2Inc1CgEFSz2gdw7vmdfiBjn7PKz0ir1UmXAYsCYV_EYo87mxjfvxcRkUfyTH_z-xBYJdjcdyPHELTgDM7oR2iQWWben0B10WoivkAzHBnfXZxr4CJzToXZd3skpBw7eVfv0PGqU3LBMAIgN_VR8YrwA60DxxlQJGMWyTKsBtczusavPyp"/>
+<div class="product_pet_indicator">
+<span>Dog &amp; Cat</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">Organic Pet Shampoo</h3>
+<p class="product_description">Gentle and natural shampoo, perfect for sensitive skin, leaving a fresh scent.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+<div class="product_card">
+<div class="product_image_container">
+<img alt="A colorful and sturdy bird cage." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWzI3KkYilDr-bcHW_FrLkl4ObdBluNf0FBNvlM2ZfeReAjg6tALJfR34XVdADszNSwkxHTk-rixnPKZVQKNkax5W1xTiqzjK6VonJ71F0u488-4sZwdYSK0OTR6wQaKVX49tiXa7yeu3TBtT_tcn-nKc-8E2KGkOJuROsmxX04w2bz2OxTraAecGhMVXQJXrfvDRRtdmj_ReJt4I5_Is4paYnKME69_uG8caPF0T0NnvuEKZdEUmnhJDVlZlW3CJgMua13lwW91dr"/>
+<div class="product_pet_indicator">
+<span>Other Pets</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">Avian Villa Cage</h3>
+<p class="product_description">A spacious and secure cage for your feathered friends, with multiple perches.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+<div class="product_card">
+<div class="product_image_container">
+<img alt="A modern, stylish cat scratching post." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEzx-5wPg6yC4dcHicPre9nPnt2F2NXNi7_pGMxdhMPEAlKJgSWHdLbqThfBYKtzXxDgEk8hd8INFYOQ8oxEo5T4txaSsGVJxf-xNPl1C3jxZ3QZy6jUq7ZTYVXGG8Ke4Z5ySGQYlYeZCnXYXa45HKfLx7xoAebrlomkPO3DNtJKU5hXOdYsQlf_idCXzZ6BbjiNU_O_SB4o29AtTkog3uG0oPdE4RWE94Te4v-a1yHStyPokquMC_ePqrriIID2bFswKsobXR8TQK"/>
+<div class="product_pet_indicator">
+<span>Cat</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">Modern Scratch Post</h3>
+<p class="product_description">Satisfy your cat's natural scratching instincts with this sleek and durable post.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+<div class="product_card">
+<div class="product_image_container">
+<img alt="A bag of premium grain-free dog food." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAo0GFqhfo2b1eis3F6IKkTRigjQkqb_a9x04nKqxsnS8XjZcnHNPdBymhkzShBD2yUuvTCj7lCB5infsHQmbGzEc7iCwQQ0Th_IV2P5OjAz5wYfCTQXexZ-VjmbJg_l6jkF6FHof83nNlq5VQCtABzhtA1_JBxcfxUH-A-IQ6t-tII61L3kU9JBl6jcgVdpmTlU_wZg8vQxlK7MaeF6f43Mpnh46lYzFyECiwyhyD6Y8Hko04iSLiS_rTDvnvdqC51HtcIgAnywCja"/>
+<div class="product_pet_indicator">
+<span>Dog</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">Grain-Free Dog Food</h3>
+<p class="product_description">High-protein, grain-free formula to support your dog's active lifestyle.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+<div class="product_card">
+<div class="product_image_container">
+<img alt="A comfortable hamster cage with tunnels and a wheel." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOPl0y8TwLybTijQX4fvdMmkv406unVPShG-DKayb93H7hFkiRYxs1Gbd2UU2xpqJuCGDrz_Y6LbgPgIqbyM9fh8C-Ska-4UK22RJRAxd1aeJwYRTd__SO08wDMb1cPaqXkDZIJhubyHEX4sV4__Q4IHTAML5P9ILmGWmbVHXEQ147uWghEkRzh2HGKZnScH0D-r_R3C3XCcO9tYKFmJx1EIgrja9zwsTrFlO6CVY1riEESNPIrNhFn_KElofx37oa0_ayk5OHM5oM"/>
+<div class="product_pet_indicator">
+<span>Other Pets</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">Hamster Habitat</h3>
+<p class="product_description">A multi-level habitat providing ample space for your hamster to play and explore.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+<div class="product_card">
+<div class="product_image_container">
+<img alt="A stylish leather dog collar with a name tag." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBND4Bs57xQwzjVRe1ES7g0WSswSrUmf3G3aiN3CRVQap_eAg1G2t1BUD79dwLsqniauc3TJKa4uVLimggZrCmD3gdS93rdMkwcojY_BzAed0kqASgJqtwaAS-SZp-uhW9A90V4x9Gl9L7bd3G-glleKkQ43gRVwp9-A2aJ4K0WsyPjK2-KFoYKqKfFpD-nQO02dCa3BMA4zVMWfyrLq-f7It9VY0Ywm9ZtlaUGYQ7Ms7OsIBqgd0IBgxozb52X67WNJHjA-qS_neP4"/>
+<div class="product_pet_indicator">
+<span>Dog</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">Leather Dog Collar</h3>
+<p class="product_description">A high-quality, genuine leather collar that's both durable and fashionable.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+<div class="product_card">
+<div class="product_image_container">
+<img alt="A packet of catnip-infused treats." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDdyDrgL-0DX6KgMw52WEBTcQPWD4vq5kBETcSa-6lr2NiDSCqJHpkVAqpOkq4JoojX9Ybk5xzByF3QxJz3BUXbZdLKXDQ3hsPfd9TRTLOyGNZVxcwW4mMTrx5utIaP78kypknjJuiLqaE3KtWRcCXKqeXm0ms-jXaZ1HIH7EJBWLdizHuQFzqIO9Ns3Jw4eOE30dhrdZhIXS5XJfhgZsFchOgYh-JRhdlSbJNYntMgLXsqrNEq5ehDRTskspm9xvNmUM0XT6PzWtQ"/>
+<div class="product_pet_indicator">
+<span>Cat</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">Catnip Cravings</h3>
+<p class="product_description">Irresistible treats infused with premium catnip for a moment of pure bliss.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+<div class="product_card">
+<div class="product_image_container">
+<img alt="A soft grooming brush for pets." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLT0MwdDfzRJ-Q2kryqYhT1K5Qo0yFDvB3hYAF6TrD81lYdc3pEjxnUxDVubicvYydNA2SMSrIkLZoEUkMw0BGBXwcgemZR4zh12UHDtPC_f4WNzKpA4__3bhLiRTZRdjizxbq3KpGfNEGum9QW_TPZKxFdbC5Gmvt3knhVhXA7M1_1IJVhwfKImkZmh3ImKvD80JV_xdjps7NvlIlUfrqU0gfLirSee2RkJvI5e5LQq2ta7OBelEtmspz2YjgNNeFVU9fn_BsJiHs"/>
+<div class="product_pet_indicator">
+<span>Dog &amp; Cat</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">Soft Grooming Brush</h3>
+<p class="product_description">Keep your pet's coat healthy and shiny with this gentle de-shedding brush.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+<div class="product_card">
+<div class="product_image_container">
+<img alt="A pack of dental chews for dogs." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxiFo5Q6gBYvrm2ue9qMabYnSyt7FqkSkfps67Z9VlRLa3q5N8kBzTLB72Z2sLaO3jGyykECq2t5eENF0DOFPreOAQIw9V6nAuiRtgYkkue2FiWqFMySY6ldl9snHFXiggWFLRjGKRbCi6J6jOfdAnitb46_w8EAMlRoWsKxa0AaxRUXu_Q-j_JLAiMA9uy28MwXNAgTIH3aljoGz2DdrXDEcCyyH4TZvSOLH3E2x4Er9fGCAblFLVcoAAGxPXZbT4d8tko6DzPsp_"/>
+<div class="product_pet_indicator">
+<span>Dog</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">Dental Health Chews</h3>
+<p class="product_description">Promotes healthy teeth and gums while freshening your dog's breath.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+<div class="product_card">
+<div class="product_image_container">
+<img alt="An automatic pet feeder." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBK9FyyDph3-xhaqd5snRVyvg5a9_6VXW95ioQc7BF8RpyL1ap-Z6szpEnFepksSW-7vICsr3Vn-Z7sFUh94XF0vrKJnfq8fI6pv8q2NvDwg8UCHY3kOmwITGVCbXX4zdf02ThXH0rfMKg9bimQ98olNcBbMmxPAk6hTVNCotecOPxQE6oE6hwrHZHShUlVgU7TPehcjQbfaecItVAmDlCm1YmmBsvc74UbFK87XgmkFvIXYN164NbdUaExFBROEsLwE_LuQW-Pj3-"/>
+<div class="product_pet_indicator">
+<span>Dog &amp; Cat</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">Auto Pet Feeder</h3>
+<p class="product_description">Schedule your pet's meals in advance with this programmable feeder.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+<div class="product_card">
+<div class="product_image_container">
+<img alt="A travel carrier for small pets." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDV68uU7QbfNuXy3qUyqAIs53rwSflbDaiKyW-4hLzgr-GTsoRzVf0GP6csVcYpFcCXbYe3yqdOypCCNwWPVV0YUhMtqEq-cZdELgNCOUU-KnfrDHfPqdq3BFuyiYtLMu9yWcxIur_Ye9NVnPfFeuriwvWqWFRAmObfsfu1rf4A-wr2Q1U7xmp6GMJIlkQwZpCj9xgWrc6f1QctWNFMi4eGtOWGQCE8IaFsI2vbsCmG5DdmQs_AWYFqL4RGREx8qm7sFFXK_W7Idc1L"/>
+<div class="product_pet_indicator">
+<span>Dog &amp; Cat</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">Pet Travel Carrier</h3>
+<p class="product_description">A comfortable and airline-approved carrier for taking your pet on adventures.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+<div class="product_card">
+<div class="product_image_container">
+<img alt="A small aquarium for fish." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBk8jOwXemHsRAxdyDK3xnxU0-oJSA4Z3QQWxf8vV-SPkOO0CbqPBHjPyEYDI4qx4pp3CxANIPNYuNJaz_sQZXPDq04pSkND_svQIo_xmQVVGtKzbEWC-tNpH8_HUDcjrp_wkT6EzCe4A8Vx83JOqTKfSbfw0cHSsofy3NwpStRDUZCcxegFpZj8HJBr8ejUurU6bPxRDMxljzsx2qRycGn0bQMT7va9O2FUJxksCNPiXoxBffddwqdb2avia60TWW6miAvmJ3U7MJb"/>
+<div class="product_pet_indicator">
+<span>Other Pets</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">AquaScape Tank</h3>
+<p class="product_description">A beautiful and easy-to-maintain aquarium for your fish.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+<div class="product_card">
+<div class="product_image_container">
+<img alt="Interactive puzzle feeder for dogs." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBibNqDevVVOvepu9nbSqtSuKbQiZicCpXovJbFOirfulz8sb9poygbqKvoKcb_e-7YDIwiR8vW9sUW4VZcoLlC9ro-G7ENTzGG2MQcElTgGR-uwCKeQ7VkC6W3FzrFZLRCT5tCgY6EVgrOsn9S4S4S_qDl3j6vlerw86vn9QkLzaO7Wj5JkOM7Ds1dU8ycpvijx6Y7D85f_KaD83gih8nCWihf6kwwbPnscwpGrPsf3peMbtkS8G1AJbe7lRuup347afYLQfAAgR5l"/>
+<div class="product_pet_indicator">
+<span>Dog</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">Puzzle Feeder</h3>
+<p class="product_description">Engage your dog's mind and slow down their eating with this fun puzzle feeder.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+<div class="product_card">
+<div class="product_image_container">
+<img alt="A laser pointer toy for cats." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9EzE65H_2QBmkYSe9GGJcxN2NPhXt78hwMbVRzQxnGr6YWSmAY_Sn9bSREE-jI7qQ1seyeqo1cTlNDdfot07SEvh72yJ3_bA48m4BrBkQTxww7sbDZ_hfopdnEK-M1OZNt-ipjhzJg3fADK5uqKey5Ray1dU8b1lnbAcrP94nFm3yVojPHVJzalHxKr0JuA9E7IzmUcQfmOxeAOVlMWw2_jJbw65SaR6T9D2R0E0RsgqqtXnC9G_KXdIbH9b2J04_xBlk1GwZOdsk"/>
+<div class="product_pet_indicator">
+<span>Cat</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">Laser Chase Toy</h3>
+<p class="product_description">Provide endless fun and exercise for your cat with this safe, automatic laser toy.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+<div class="product_card">
+<div class="product_image_container">
+<img alt="A set of nail clippers for pets." class="product_image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLXBPLZs6W97-EJ2j_y9KJSOS0Xt05lAB5Utj2mi0qY0lqLgv9SHPKhlVgG8cWo5lVeKv8mqTWX1g-LmNF27BVK1XsCE-j1HwqrgicKBNXK2S06V_sk5_FhfgQKeHqk_e1mrBOm1n1TSoNkdsuzbXhFQl-fNWDUQLPLvdDhcI3z3Sg3UFZJt2cvFzveJsqwYd-Yr17w3-xJoLEfm45apjnZjMPZmiO1krwZCDP-dnanlRvh6GWKSv5f7Q8AsBjVdCbLMheoily9Ztb"/>
+<div class="product_pet_indicator">
+<span>Dog &amp; Cat</span>
+</div>
+</div>
+<div class="flex-grow mt-4">
+<h3 class="product_title">Pro Nail Clippers</h3>
+<p class="product_description">Ergonomic and safe nail clippers for a stress-free grooming experience.</p>
+</div>
+<button class="button_primary">
+<svg aria-hidden="true" fill="currentColor" height="20" viewBox="0 0 256 256" width="20" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path>
+</svg>
+<span>Add to Cart</span>
+</button>
+</div>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-[var(--footer-background)] py-12">
+<div class="container mx-auto px-4 sm:px-6 lg:px-8">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-center md:text-left">
+<div class="lg:col-span-1">
+<h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4">Contact Us</h3>
+<ul class="space-y-2 text-[var(--text-secondary)]">
+<li>
+<a class="hover:text-[var(--primary-color)] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-color)] rounded" href="tel:+1234567890">Phone: +1 (234) 567-890</a>
+</li>
+<li>
+<a class="hover:text-[var(--primary-color)] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-color)] rounded" href="mailto:support@petpal.com">Email: support@petpal.com</a>
+</li>
+</ul>
+</div>
+<div class="lg:col-span-1">
+<h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4">Customer Support</h3>
+<ul class="space-y-2 text-[var(--text-secondary)]">
+<li>
+<a class="hover:text-[var(--primary-color)] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-color)] rounded" href="#">FAQs</a>
+</li>
+<li>
+<a class="hover:text-[var(--primary-color)] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-color)] rounded" href="#">Shipping Information</a>
+</li>
+<li>
+<a class="hover:text-[var(--primary-color)] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-color)] rounded" href="#">Return Policy</a>
+</li>
+</ul>
+</div>
+<div class="lg:col-span-1">
+<h3 class="text-lg font-semibold text-[var(--text-primary)] mb-4">Follow Us</h3>
+<div class="flex justify-center md:justify-start space-x-4">
+<a aria-label="Follow us on Facebook" class="text-[var(--text-secondary)] hover:text-[var(--primary-color)] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-color)] rounded-full" href="#">
+<svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24h-1.918c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z"></path>
+</svg>
+</a>
+<a aria-label="Follow us on Instagram" class="text-[var(--text-secondary)] hover:text-[var(--primary-color)] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-color)] rounded-full" href="#">
+<svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.011 3.584-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.584-.012-4.85-.07c-3.252-.148-4.771-1.691-4.919-4.919-.058-1.265-.069-1.645-.069-4.85s.011-3.584.069-4.85c.149-3.225 1.664-4.771 4.919-4.919 1.266-.057 1.644-.069 4.85-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948s.014 3.667.072 4.947c.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072s3.667-.014 4.947-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.947s-.014-3.667-.072-4.947c-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.689-.073-4.948-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4s1.791-4 4-4 4 1.79 4 4-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.441 1.441 1.441 1.441-.645 1.441-1.441-.645-1.44-1.441-1.44z"></path>
+</svg>
+</a>
+<a aria-label="Follow us on Twitter" class="text-[var(--text-secondary)] hover:text-[var(--primary-color)] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-color)] rounded-full" href="#">
+<svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-.424.727-.666 1.581-.666 2.492 0 1.61.82 3.027 2.053 3.858-.764-.024-1.482-.232-2.11-.583v.062c0 2.253 1.603 4.134 3.731 4.562-.39.106-.803.162-1.227.162-.3 0-.591-.03-.875-.083.592 1.844 2.308 3.187 4.341 3.224-1.591 1.246-3.594 1.988-5.772 1.988-.375 0-.745-.022-1.109-.065 2.053 1.318 4.492 2.088 7.14 2.088 8.567 0 13.255-7.098 13.255-13.254 0-.202-.005-.403-.014-.602.91-.658 1.7-1.474 2.323-2.41z"></path>
+</svg>
+</a>
+</div>
+</div>
+<div class="col-span-full md:col-span-2 lg:col-span-1 text-center md:text-right">
+<p class="text-sm text-[var(--text-secondary)]">© 2024 PetPal. All rights reserved.</p>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<div x-data="{ open: false, checkout: false }">
+<div :class="{'translate-x-0': open, 'translate-x-full': !open}" @click.away="open = false" aria-labelledby="cart-heading" aria-modal="true" class="fixed top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl transform transition-transform duration-300 ease-in-out z-30 flex flex-col" role="dialog">
+<div class="flex-grow flex flex-col" x-show="!checkout" x-transition:enter="transition ease-out duration-300" x-transition:enter-end="opacity-100" x-transition:enter-start="opacity-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-end="opacity-0" x-transition:leave-start="opacity-100">
+<div class="flex items-center justify-between p-4 md:p-6 border-b border-gray-200">
+<h2 class="text-xl font-bold text-[var(--text-primary)]" id="cart-heading">Your Cart</h2>
+<button @click="open = false" class="text-gray-500 hover:text-[var(--primary-color)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-color)] rounded-md">
+<span class="sr-only">Close cart</span>
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+<div class="flex-grow overflow-y-auto p-4 md:p-6 space-y-4">
+<div class="flex items-center gap-4">
+<img alt="A comfortable and plush cat bed." class="w-20 h-20 object-cover rounded-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbJnQN-p0xUvTTjNqF5iywyoj9jbsuJYgwr9AfowZHShTPMMz_RMNe7Ow281x59xdZbCo44UoQCt6VpyRtrWD6773srpre9kUfGPesTSqvKmv4UNmOQWOYewOEF78WxnLuwPL6c7uaXdRM0dXD_y5G1NeN3MkbRDr3A4mwvTFqNdSQYICu67P-eg1H_nDpNMokYMn1Idu_G4ZR1xzH74jKmCeMEMPTYqEGDI-IYiDl7fG9HDH-HSZvDyWCugmp1nzVDGUVZ_2g577Y"/>
+<div class="flex-grow">
+<h3 class="font-semibold text-md text-[var(--text-primary)]">CozyCat Bed</h3>
+<p class="text-sm text-[var(--text-secondary)]">Quantity: 1</p>
+</div>
+<button class="text-xs text-red-500 hover:text-red-700 font-medium focus:outline-none focus:underline">Remove</button>
+</div>
+<div class="flex items-center gap-4">
+<img alt="A bag of delicious dog treats." class="w-20 h-20 object-cover rounded-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5MpnUJMpBVuBGRMTIS2bLQyWO3srxJ4nZMT4ccDuYLpAVQbfx7aoXY2poCOUlxoctmfKd-FEOyICa7TgEAThMtnQKWUKW818y0VHUqU4eb6zF4Fb_ITSR9WEAVa0exnQsTLiJjeNDpMG7XEjWtuzFWuw3MiCz1EYtwQfH1e_xwxxoZyaa3cha4hE2okeHSFRUt_FVMjR2pPTfK8TSR_14Y6IXnmZJg952BboIVys3--8eluEVQTlM4T6ik5294umI3FKPFPsSBYcZ"/>
+<div class="flex-grow">
+<h3 class="font-semibold text-md text-[var(--text-primary)]">Doggy Delight Treats</h3>
+<p class="text-sm text-[var(--text-secondary)]">Quantity: 2</p>
+</div>
+<button class="text-xs text-red-500 hover:text-red-700 font-medium focus:outline-none focus:underline">Remove</button>
+</div>
+<div class="flex items-center gap-4">
+<img alt="A colorful feather wand cat toy." class="w-20 h-20 object-cover rounded-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCJAC6c_xi3u6hkaCv6FBI7ciUTkM8e8NGsnYYrKrDjxI6_bwYwvMIeRuCx-hTo1YSPaC_tyaPHU91U23hLwHDXrqfywhYmwxK_jldDzN-AezJAHFEcDq6elkD373GwmdJjByTw-zE02w6hEYPMnimsO_BhG2NrCgrdC-vsgUFn928edNS0DdUOj2eyJ8knR14IV8VAEtDs4uD1biTK5cyF3iDunYewNMho1cqmpazpqqf2drF7XC1HE57EIANiWosTflKhaIoPwCq"/>
+<div class="flex-grow">
+<h3 class="font-semibold text-md text-[var(--text-primary)]">Feather Frenzy Toy</h3>
+<p class="text-sm text-[var(--text-secondary)]">Quantity: 1</p>
+</div>
+<button class="text-xs text-red-500 hover:text-red-700 font-medium focus:outline-none focus:underline">Remove</button>
+</div>
+</div>
+<div class="p-4 md:p-6 border-t border-gray-200 bg-gray-50">
+<div class="flex justify-between items-center mb-4">
+<span class="text-lg font-medium text-[var(--text-secondary)]">Subtotal:</span>
+<span class="text-xl font-bold text-[var(--text-primary)]">$59.97</span>
+</div>
+<button @click="checkout = true" class="w-full flex items-center justify-center gap-3 bg-[var(--primary-color)] text-white rounded-md px-4 py-3 hover:bg-green-500 transition-colors duration-300 font-bold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-color)]">
+<svg aria-hidden="true" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3.5 4a.5.5 0 0 1 .5-.5h16a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H4a.5.5 0 0 1-.5-.5V4ZM4 6h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6Zm2 2v2h2V8H6Zm4 0v2h2V8h-2Zm4 0v2h2V8h-2Zm-8 4v2h2v-2H6Zm4 0v2h2v-2h-2Zm4 0v2h2v-2h-2Z"></path>
+</svg>
+<span>Proceed to Checkout</span>
+</button>
+</div>
+</div>
+<div class="h-full flex flex-col" style="display: none;" x-show="checkout" x-transition:enter="transition ease-out duration-300" x-transition:enter-end="opacity-100" x-transition:enter-start="opacity-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-end="opacity-0" x-transition:leave-start="opacity-100">
+<div class="flex items-center justify-between p-4 md:p-6 border-b border-gray-200">
+<button @click="checkout = false" class="text-gray-500 hover:text-[var(--primary-color)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-color)] rounded-md">
+<span class="sr-only">Back to cart</span>
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<h2 class="text-xl font-bold text-[var(--text-primary)]">Checkout Details</h2>
+<div class="w-6"></div>
+</div>
+<div class="flex-grow overflow-y-auto p-4 md:p-6 space-y-6">
+<div class="space-y-4">
+<div>
+<label class="block text-sm font-medium text-[var(--text-secondary)] mb-1" for="name">Full Name</label>
+<input class="form-input w-full rounded-md border-gray-300 focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)]" id="name" placeholder="John Doe" required="" type="text"/>
+</div>
+<div>
+<label class="block text-sm font-medium text-[var(--text-secondary)] mb-1" for="phone">Phone Number</label>
+<input class="form-input w-full rounded-md border-gray-300 focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)]" id="phone" placeholder="+1 (555) 123-4567" required="" type="tel"/>
+</div>
+<div>
+<label class="block text-sm font-medium text-[var(--text-secondary)] mb-1" for="address">Delivery Address</label>
+<textarea class="form-textarea w-full rounded-md border-gray-300 focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)]" id="address" placeholder="123 Pet Street, Dogtown, USA 12345" required="" rows="3"></textarea>
+</div>
+</div>
+<div>
+<h3 class="text-lg font-semibold text-[var(--text-primary)] mb-3">Order Summary</h3>
+<div class="space-y-2 text-sm text-[var(--text-secondary)] border-y border-gray-200 py-3">
+<div class="flex justify-between"><span>CozyCat Bed (x1)</span><span>$29.99</span></div>
+<div class="flex justify-between"><span>Doggy Delight Treats (x2)</span><span>$19.98</span></div>
+<div class="flex justify-between"><span>Feather Frenzy Toy (x1)</span><span>$9.99</span></div>
+</div>
+<div class="flex justify-between font-bold text-lg text-[var(--text-primary)] pt-3">
+<span>Total</span>
+<span>$59.97</span>
+</div>
+</div>
+</div>
+<div class="p-4 md:p-6 border-t border-gray-200 bg-gray-50">
+<button class="w-full flex items-center justify-center gap-3 bg-[#25D366] text-white rounded-md px-4 py-3 hover:bg-[#1EBE57] transition-colors duration-300 font-bold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#25D366]">
+<svg aria-hidden="true" fill="currentColor" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.487 5.235 3.487 8.413 0 6.557-5.338 11.892-11.894 11.892-1.99 0-3.903-.52-5.586-1.459L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.447-4.435-9.884-9.888-9.884-5.448 0-9.886 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01s-.521.074-.792.372c-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"></path>
+</svg>
+<span>Send Order via WhatsApp</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<div class="fixed bottom-5 right-5 w-full max-w-xs p-4 text-gray-500 bg-white rounded-lg shadow-lg dark:bg-gray-800 dark:text-gray-400 flex items-center gap-4 z-50" id="toast-success" role="alert">
+<img alt="A comfortable and plush cat bed." class="w-12 h-12 object-cover rounded-md" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbJnQN-p0xUvTTjNqF5iywyoj9jbsuJYgwr9AfowZHShTPMMz_RMNe7Ow281x59xdZbCo44UoQCt6VpyRtrWD6773srpre9kUfGPesTSqvKmv4UNmOQWOYewOEF78WxnLuwPL6c7uaXdRM0dXD_y5G1NeN3MkbRDr3A4mwvTFqNdSQYICu67P-eg1H_nDpNMokYMn1Idu_G4ZR1xzH74jKmCeMEMPTYqEGDI-IYiDl7fG9HDH-HSZvDyWCugmp1nzVDGUVZ_2g577Y"/>
+<div class="flex-grow">
+<div class="text-sm font-semibold text-gray-900 dark:text-white">Added to Cart</div>
+<div class="text-sm font-normal">CozyCat Bed</div>
+</div>
+<button aria-label="Close" class="ms-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex items-center justify-center h-8 w-8 dark:text-gray-500 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700" type="button">
+<span class="sr-only">Close</span>
+<svg aria-hidden="true" class="w-3 h-3" fill="none" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
+<path d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+<script defer="" src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const buttons = document.querySelectorAll('.button_primary');
+                const toast = document.getElementById('toast-success');
+                const closeButton = toast.querySelector('button[aria-label="Close"]');
+                let toastTimeout;
+                buttons.forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (toast.classList.contains('show')) {
+                            toast.classList.remove('show');
+                            clearTimeout(toastTimeout);
+                            setTimeout(() => {
+                                showToast();
+                            }, 300);
+                        } else {
+                            showToast();
+                        }
+                    });
+                });
+                function showToast() {
+                    toast.classList.add('show');
+                    toastTimeout = setTimeout(() => {
+                        toast.classList.remove('show');
+                    }, 5000);
+                }
+                closeButton.addEventListener('click', () => {
+                    toast.classList.remove('show');
+                    clearTimeout(toastTimeout);
+                });
+                const cartButton = document.querySelector('.peer');
+                const cartPanel = cartButton.closest('.group\\/design-root').querySelector('[x-data]');
+                const cartPanelInstance = Alpine.$data(cartPanel);
+                cartButton.addEventListener('click', () => {
+                    cartPanelInstance.open = true;
+                });
+                const whatsappCheckoutButton = document.querySelector('[x-show="checkout"] button');
+                whatsappCheckoutButton.addEventListener('click', () => {
+                    const name = document.getElementById('name').value;
+                    const phone = document.getElementById('phone').value;
+                    const address = document.getElementById('address').value;
+                    const orderSummary = "Order Summary:\n- CozyCat Bed (x1)\n- Doggy Delight Treats (x2)\n- Feather Frenzy Toy (x1)";
+                    const message = `Hello PetPal! I'd like to place an order.\n\n*Customer Info:*\nName: ${name}\nPhone: ${phone}\nAddress: ${address}\n\n${orderSummary}\n\nSubtotal: $59.97`;
+                    const whatsappUrl = `https://wa.me/1234567890?text=${encodeURIComponent(message)}`;
+                    window.open(whatsappUrl, '_blank');
+                });
+            });
+        </script>
+</div>
+
+</body></html>
